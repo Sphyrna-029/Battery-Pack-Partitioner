@@ -3,6 +3,8 @@ import argparse
 import textwrap
 
 pool = []    
+groupTotal = []
+nominalVoltage = 3.7
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=textwrap.dedent('''\
 ████████████████████████████████████  
@@ -27,37 +29,44 @@ with open(inputfile, newline='') as csvfile:
     for row in reader:
         pool.append(int(row['mAh']))
 
-#Our cell groups (added small ints so loop knows where to start)
-groupA = [0.0001] 
-groupB = [0.0002]
-groupC = [0.0003]
-
-avg_mah = sum(pool) / len(pool)
-print('Average mAh: ' + str(avg_mah))
-
 pool.sort(reverse = True) 
 
+for x in range(groups):
+    cellGroup = []
+    cellGroup.append(x * 0.05)
+    groupTotal.append(cellGroup)
+
+def getSmallest(x): #Find the array with the smallest sum.
+    sumList = []
+    for x in groupTotal:
+        sumList.append(sum(x))
+    smallestList = sumList.index(min(sumList))
+    return smallestList
+
 for x in pool: #Iterate over our list of batteries and divy up the largest capacities to the smallest groups. 
-    smollest = [sum(groupA), sum(groupB), sum(groupC)] #Find the array with the smallest value
-    smol = smollest.index(min(smollest)) #Get the index of that value so we know which array is the smallest, we can then map 0-groupA, 1-groupB, etc.
+    smallIndex = getSmallest(groupTotal)
+    groupTotal[smallIndex].append(x)
 
-    if smol == 0:
-        groupA.append(x)
+#Quick stats
+avg_mah = sum(pool) / len(pool)
+mAhSum = 0
+for x in groupTotal:
+    mAhSum += sum(x)
+groupAverage = mAhSum / len(groupTotal)
 
-    if smol == 1:
-        groupB.append(x)
+print('==================================')
+print('=========== Statistics ===========')
+print('==================================')
+print('Average Cell Capactiy: ' + str(round(avg_mah)) + 'mAh')
+print('Total Pack Capacity: ' + str(round(groupAverage)) + 'mAh')
+print('Pack Nominal Voltage: ' + str(round(len(groupTotal) * nominalVoltage, 2)) + 'v')
+print('\n')
 
-    if smol == 2:
-        groupC.append(x)
 
-print('Group A: ' + str(sum(groupA)))
-print(str(groupA) + '\n')
-print('Group B: ' + str(sum(groupB)))
-print(str(groupB) + '\n')
-print('Group C: ' + str(sum(groupC)))
-print(str(groupC) + '\n')
-avg = sum(groupA) + sum(groupB) + sum(groupC)
-
-avg = avg / 3
-
-print('Group average: ' + str(avg))
+for x in groupTotal:
+    x.pop(0)
+    print('==================================')
+    print('Group ' + str(groupTotal.index(x)))
+    print('Total mAh: ' + str(sum(x)))
+    print('Cells: ' + str(x))
+    print('==================================\n')
