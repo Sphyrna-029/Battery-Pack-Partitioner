@@ -40,6 +40,12 @@ with open(inputfile, newline='') as csvfile:
 pool.sort(reverse=True, key=lambda x: x.mah)
 
 
+# If extra cells are present in the list, remove the smallest ones
+extra_cells = len(pool) % groups
+if extra_cells != 0:
+    pool = pool[:-extra_cells]
+
+
 def getSmallestListIdx():  # Find the array with the smallest sum
     sumList = []
     for grp in groupTotal:
