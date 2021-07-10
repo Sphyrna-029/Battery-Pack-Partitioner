@@ -2,71 +2,72 @@ import csv
 import argparse
 import textwrap
 
-pool = []    
-groupTotal = []
-nominalVoltage = 3.7
+
+class BatteryCell:
+    def __init__(self, name, mah):
+        self.name = name
+        self.mah = mah
+
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=textwrap.dedent('''\
-████████████████████████████████████  
-██                                ██  
+████████████████████████████████████
+██                                ██
 ██  ████  ████  ████  ████  ████  ████
 ██  ████  ████  ████  ████  ████  ████
 ██  ████  ████  ████  ████  ████  ████
 ██  ████  ████  ████  ████  ████  ████
 ██  ████  ████  ████  ████  ████  ████
-██                                ██  
+██                                ██
 ████████████████████████████████████
     - 18650 Cell Partitioner +'''))
 parser.add_argument("-f", "--file", type=str, help="Input CSV file.")
-parser.add_argument("-p", "--parrallel", type=int, help="Number of parrallel packs in your battery.")
+parser.add_argument("-p", "--parallel", type=int, help="Number of parallel packs in your battery.")
 args = parser.parse_args()
 
 inputfile = args.file
-groups = args.parrallel
+groups = args.parallel
+
+pool = []
+groupTotal = [[] for _ in range(groups)]
+nominalVoltage = 3.7
 
 with open(inputfile, newline='') as csvfile:
     reader = csv.DictReader(csvfile)
-    for row in reader:
-        pool.append(int(row['mAh']))
+    for i, row in enumerate(reader):
+        cell = BatteryCell(i+1, int(row['mAh']))
+        pool.append(cell)
 
-pool.sort(reverse = True) 
+pool.sort(reverse=True, key=lambda x: x.mah)
 
-for x in range(groups):
-    cellGroup = []
-    cellGroup.append(x * 0.05)
-    groupTotal.append(cellGroup)
 
-def getSmallest(x): #Find the array with the smallest sum.
+def getSmallestListIdx():  # Find the array with the smallest sum
     sumList = []
-    for x in groupTotal:
-        sumList.append(sum(x))
+    for grp in groupTotal:
+        sumList.append(sum(c.mah for c in grp))
     smallestList = sumList.index(min(sumList))
     return smallestList
 
-for x in pool: #Iterate over our list of batteries and divy up the largest capacities to the smallest groups. 
-    smallIndex = getSmallest(groupTotal)
-    groupTotal[smallIndex].append(x)
 
-#Quick stats
-avg_mah = sum(pool) / len(pool)
+for cell in pool:  # Iterate over our list of batteries and divy up the largest capacities to the smallest groups.
+    smallIndex = getSmallestListIdx()
+    groupTotal[smallIndex].append(cell)
+
+# Quick stats
+avg_mah = sum(c.mah for c in pool) / len(pool)
 mAhSum = 0
-for x in groupTotal:
-    mAhSum += sum(x)
+for grp in groupTotal:
+    mAhSum += sum(c.mah for c in grp)
 groupAverage = mAhSum / len(groupTotal)
 
-print('==================================')
-print('=========== Statistics ===========')
-print('==================================')
-print('Average Cell Capactiy: ' + str(round(avg_mah)) + 'mAh')
-print('Total Pack Capacity: ' + str(round(groupAverage)) + 'mAh')
-print('Pack Nominal Voltage: ' + str(round(len(groupTotal) * nominalVoltage, 2)) + 'v')
+print('Stats:')
+print('  - Avg. Cell Capactiy:   %d mAh' % round(avg_mah))
+print('  - Tot. Pack Capacity:   %d mAh' % round(groupAverage))
+print('  - Pack Nominal Voltage: %d V' % round(len(groupTotal) * nominalVoltage, 2))
 print('\n')
 
 
-for x in groupTotal:
-    x.pop(0)
-    print('==================================')
-    print('Group ' + str(groupTotal.index(x)))
-    print('Total mAh: ' + str(sum(x)))
-    print('Cells: ' + str(x))
-    print('==================================\n')
+for idx, grp in enumerate(groupTotal):
+    print('Group #%d (tot. %d mAh)' % (idx, sum(c.mah for c in grp)))
+    for cell in grp:
+        print('  - Cell N° %-3d - %5d mAh' % (cell.name, cell.mah))
+    print()
