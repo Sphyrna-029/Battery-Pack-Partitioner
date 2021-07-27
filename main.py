@@ -27,7 +27,7 @@ parser.add_argument("-p", "--parallel", type=int, help="Number of parallel packs
 parser.add_argument("-i", "--iterations", type=int, default=0,
                     help="Number of branch-&-bound iterations to optimize the result")
 parser.add_argument("--hist", action='store_true',
-                    help="Display a histogram with capacity destribution at the end of the process")
+                    help="Display a histogram with capacity distribution at the end of the process")
 args = parser.parse_args()
 
 

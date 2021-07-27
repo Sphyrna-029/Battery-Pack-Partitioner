@@ -3,8 +3,7 @@ Algorithm to sort 18650 cells by mAh into matched cell groups.
 
 
 ## Example usage:
-```
-usage: main.py [-h] -f FILE -p PARALLEL
+```usage: main.py [-h] [-f FILE] [-p PARALLEL] [-i ITERATIONS] [--hist]
 
 ████████████████████████████████████
 ██                                ██
@@ -17,11 +16,14 @@ usage: main.py [-h] -f FILE -p PARALLEL
 ████████████████████████████████████
     - 18650 Cell Partitioner +
 
-Options:
+optional arguments:
   -h, --help            show this help message and exit
-  -f FILE, --file FILE  Input CSV file.
+  -f FILE, --file FILE  Input CSV file
   -p PARALLEL, --parallel PARALLEL
-                        Number of parallel packs in your battery.
+                        Number of parallel packs in your battery
+  -i ITERATIONS, --iterations ITERATIONS
+                        Number of branch-&-bound iterations to optimize the result
+  --hist                Display a histogram with capacity distribution at the end of the process
 ```
 
 
