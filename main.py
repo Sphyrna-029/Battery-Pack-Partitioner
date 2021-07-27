@@ -1,7 +1,6 @@
 import csv
 import argparse
 import textwrap
-import matplotlib.pyplot as plt
 from random import choice, randint
 
 
@@ -97,6 +96,8 @@ for idx, grp in enumerate(groupTotal):
     print()
 
 if args.hist:
+    import matplotlib.pyplot as plt
+    
     plt.hist([sum(c.mah for c in grp) for grp in groupTotal])
     plt.title("Distribution of pack capacity")
     plt.xlabel("Pack capacity (mAh)")
