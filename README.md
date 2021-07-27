@@ -26,6 +26,8 @@ optional arguments:
   --hist                Display a histogram with capacity distribution at the end of the process
 ```
 
+## Optimization Step
+By providing a number to the `-i` option (e.g. 10000), the script will perform ad additional optimization step using a Branch & Bound technique, attempting random cell swaps among packs to further level out their differences. Use the `--hist` option to output a histogram showing the distribution of pack capacities to better tune your parameters.
 
 ## Example Output:
 
