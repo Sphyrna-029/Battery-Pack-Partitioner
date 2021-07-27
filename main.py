@@ -1,11 +1,13 @@
 import csv
 import argparse
 import textwrap
+import matplotlib.pyplot as plt
+from random import choice, randint
 
 
 class BatteryCell:
-    def __init__(self, name, mah):
-        self.name = name
+    def __init__(self, id, mah):
+        self.id = id
         self.mah = mah
 
 
@@ -20,18 +22,21 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpForm
 ██                                ██
 ████████████████████████████████████
     - 18650 Cell Partitioner +'''))
-parser.add_argument("-f", "--file", type=str, help="Input CSV file.")
-parser.add_argument("-p", "--parallel", type=int, help="Number of parallel packs in your battery.")
+parser.add_argument("-f", "--file", type=str, help="Input CSV file")
+parser.add_argument("-p", "--parallel", type=int, help="Number of parallel packs in your battery")
+parser.add_argument("-i", "--iterations", type=int, default=0,
+                    help="Number of branch-&-bound iterations to optimize the result")
+parser.add_argument("--hist", action='store_true',
+                    help="Display a histogram with capacity destribution at the end of the process")
 args = parser.parse_args()
 
-inputfile = args.file
-groups = args.parallel
 
+groups = args.parallel
 pool = []
 groupTotal = [[] for _ in range(groups)]
 nominalVoltage = 3.7
 
-with open(inputfile, newline='') as csvfile:
+with open(args.file, newline='') as csvfile:
     reader = csv.DictReader(csvfile)
     for i, row in enumerate(reader):
         cell = BatteryCell(i+1, int(row['mAh']))
@@ -65,6 +70,19 @@ for grp in groupTotal:
     mAhSum += sum(c.mah for c in grp)
 groupAverage = mAhSum / len(groupTotal)
 
+
+for _ in range(args.iterations):
+    groupTotal.sort(key=lambda x: sum(c.mah for c in x))
+    A, B = choice(groupTotal[:groups//2]), choice(groupTotal[groups//2:])
+    i1, i2 = randint(0, 3), randint(0, 3)
+    delta1 = abs(sum(c.mah for c in A) - sum(c.mah for c in B))
+    A[i1], B[i2] = B[i2], A[i1]
+    delta2 = abs(sum(c.mah for c in A) - sum(c.mah for c in B))
+
+    if delta2 > delta1:
+        A[i1], B[i2] = B[i2], A[i1]
+
+
 print('Stats:')
 print('  - Avg. Cell Capactiy:   %d mAh' % round(avg_mah))
 print('  - Tot. Pack Capacity:   %d mAh' % round(groupAverage))
@@ -75,5 +93,12 @@ print('\n')
 for idx, grp in enumerate(groupTotal):
     print('Group #%d (tot. %d mAh)' % (idx, sum(c.mah for c in grp)))
     for cell in grp:
-        print('  - Cell N° %-3d - %5d mAh' % (cell.name, cell.mah))
+        print('  - Cell N° %-3d - %5d mAh' % (cell.id, cell.mah))
     print()
+
+if args.hist:
+    plt.hist([sum(c.mah for c in grp) for grp in groupTotal])
+    plt.title("Distribution of pack capacity")
+    plt.xlabel("Pack capacity (mAh)")
+    plt.ylabel("Num. of packs")
+    plt.show()
